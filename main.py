@@ -42,9 +42,11 @@ def send_email(subject, body):
 
         msg.attach(MIMEText(body, "plain"))
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(EMAIL_SENDER, EMAIL_APP_PASSWORD)
-            server.send_message(msg)
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(EMAIL_SENDER, EMAIL_APP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
 
         print("📧 Email sent!")
 

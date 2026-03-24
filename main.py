@@ -13,9 +13,9 @@ from dotenv import load_dotenv
 # ==============================
 load_dotenv()
 
-EMAIL_SENDER = os.getenv("EMAIL_SENDER")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
-EMAIL_APP_PASSWORD = os.getenv("EMAIL_APP_PASSWORD")
+
 
 # ==============================
 # CONFIG
@@ -35,20 +35,24 @@ os.makedirs("data", exist_ok=True)
 # ==============================
 def send_email(subject, body):
     try:
-        msg = MIMEMultipart()
-        msg["From"] = EMAIL_SENDER
-        msg["To"] = EMAIL_RECEIVER
-        msg["Subject"] = subject
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "from": "onboarding@resend.dev",  # default sender
+                "to": EMAIL_RECEIVER,
+                "subject": subject,
+                "text": body
+            }
+        )
 
-        msg.attach(MIMEText(body, "plain"))
-
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(EMAIL_SENDER, EMAIL_APP_PASSWORD)
-        server.send_message(msg)
-        server.quit()
-
-        print("📧 Email sent!")
+        if response.status_code in [200, 201]:
+            print("📧 Email sent via Resend!")
+        else:
+            print("❌ Resend failed:", response.text)
 
     except Exception as e:
         print("❌ Email failed:", e)

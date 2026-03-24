@@ -15,7 +15,9 @@ load_dotenv()
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
-
+print("✅ Environment variables loaded")
+print(f"Resend API Key: {'Loaded' if RESEND_API_KEY else 'Missing'}")
+print(f"Email Receiver: {'Loaded' if EMAIL_RECEIVER else 'Missing'}")
 
 # ==============================
 # CONFIG

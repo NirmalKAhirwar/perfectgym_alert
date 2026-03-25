@@ -39,7 +39,7 @@ print("✅ Environment variables loaded")
 TARGET_CLASS = "wetlanders"
 URL = "https://cockburnarc.perfectgym.com.au/ClientPortal2/Groups/GroupsCalendar/GroupList"
 
-CHECK_INTERVAL = 10  # 30 minutes
+CHECK_INTERVAL = 300  # 30 minutes
 MAX_PAGES = 20
 
 previous_vacancy_state = {}
@@ -132,7 +132,7 @@ def fetch_data():
                 "ageLimitId": None,
                 "activityCategoryIds": [],
                 "activityUserLevelIds": [],
-                "daysOfWeek": [0,5],  # Sunday
+                "daysOfWeek": [0],  # Sunday
                 "semesterIds": [],
                 "showSingleLesson": None,
                 "date": None

@@ -190,8 +190,8 @@ def monitor():
     global previous_vacancy_state
     print(f"\n ⏱️ checking at {format_datetime(datetime.now().isoformat())}")
 
-    # data = fetch_data()
-    data = load_json("data/response_2026-03-25_11-07-39.json")  # for testing
+    data = fetch_data()
+    # data = load_json("data/response_2026-03-25_11-07-39.json")  # for testing
 
     if not data:
         send_email("⚠️ Monitor Alert", "No data received from PerfectGym API")

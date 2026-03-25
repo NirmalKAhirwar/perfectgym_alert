@@ -9,6 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .history/
-.data
 
+data/
+old_main.py
 .env

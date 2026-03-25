@@ -2,10 +2,8 @@ import requests
 import time
 import json
 import os
+import sys
 from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 
 # ==============================
@@ -15,9 +13,25 @@ load_dotenv()
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = ""
+
+
+def get_chat_id():
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
+    
+    res = requests.get(url).json()
+
+    if res["result"]:
+        return res["result"][-1]["message"]["chat"]["id"]
+
+    return None
+
+if not TELEGRAM_CHAT_ID:
+    TELEGRAM_CHAT_ID = get_chat_id()
+    print("Detected Chat ID:", TELEGRAM_CHAT_ID)
+
 print("✅ Environment variables loaded")
-print(f"Resend API Key: {'Loaded' if RESEND_API_KEY else 'Missing'}")
-print(f"Email Receiver: {'Loaded' if EMAIL_RECEIVER else 'Missing'}")
 
 # ==============================
 # CONFIG
@@ -25,15 +39,23 @@ print(f"Email Receiver: {'Loaded' if EMAIL_RECEIVER else 'Missing'}")
 TARGET_CLASS = "wetlanders"
 URL = "https://cockburnarc.perfectgym.com.au/ClientPortal2/Groups/GroupsCalendar/GroupList"
 
-CHECK_INTERVAL = 60  # 30 minutes
+CHECK_INTERVAL = 10  # 30 minutes
 MAX_PAGES = 20
 
 previous_vacancy_state = {}
 
 os.makedirs("data", exist_ok=True)
 
+
+def format_datetime(date_str):
+    try:
+        dt = datetime.fromisoformat(date_str)
+        return dt.strftime("%A, %d %B %Y at %I:%M %p")
+    except:
+        return date_str  # fallback if parsing fails
+
 # ==============================
-# EMAIL FUNCTION
+# EMAIL (RESEND API)
 # ==============================
 def send_email(subject, body):
     try:
@@ -44,7 +66,7 @@ def send_email(subject, body):
                 "Content-Type": "application/json"
             },
             json={
-                "from": "onboarding@resend.dev",  # default sender
+                "from": "onboarding@resend.dev",
                 "to": EMAIL_RECEIVER,
                 "subject": subject,
                 "text": body
@@ -52,12 +74,44 @@ def send_email(subject, body):
         )
 
         if response.status_code in [200, 201]:
-            print("📧 Email sent via Resend!")
+            print("📧 Email sent!")
         else:
-            print("❌ Resend failed:", response.text)
+            print("❌ Email failed:", response.text)
 
     except Exception as e:
-        print("❌ Email failed:", e)
+        print("❌ Email error:", e)
+
+# ==============================
+# TELEGRAM ALERT
+# ==============================
+def send_telegram(message):
+    global TELEGRAM_CHAT_ID
+
+    try:
+        # auto-fetch chat_id if not set
+        if not TELEGRAM_CHAT_ID:
+            TELEGRAM_CHAT_ID = get_chat_id()
+
+            if not TELEGRAM_CHAT_ID:
+                print("⚠️ No chat_id found. Ask user to message the bot.")
+                return
+
+            print(f"✅ Auto-detected chat_id: {TELEGRAM_CHAT_ID}")
+
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+
+        response = requests.post(url, data={
+            "chat_id": TELEGRAM_CHAT_ID,
+            "text": message
+        })
+
+        if response.status_code == 200:
+            print("📱 Telegram sent!")
+        else:
+            print("❌ Telegram failed:", response.text)
+
+    except Exception as e:
+        print("❌ Telegram error:", e)
 
 # ==============================
 # FETCH DATA (PAGINATION)
@@ -93,7 +147,7 @@ def fetch_data():
             response = requests.post(URL, headers=headers, json=payload, timeout=10)
 
             if response.status_code != 200:
-                print(f"❌ Error on page {page_number}: {response.status_code}")
+                print(f"❌ Error page {page_number}: {response.status_code}")
                 break
 
             data = response.json().get("Data", [])
@@ -105,10 +159,10 @@ def fetch_data():
             print(f"✅ Page {page_number}: {len(data)} records")
             all_data.extend(data)
 
-            time.sleep(1)  # prevent rate limiting
+            time.sleep(1)
 
         except Exception as e:
-            print(f"❌ Exception on page {page_number}: {e}")
+            print(f"❌ Fetch error page {page_number}:", e)
             break
 
     return all_data
@@ -120,71 +174,79 @@ def save_json(data):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = f"data/response_{timestamp}.json"
 
-    with open(filename, "w", encoding="utf-8") as f:
+    with open(filename, "w") as f:
         json.dump(data, f, indent=2)
 
     print(f"💾 Saved: {filename}")
+
+def load_json(filename):
+    with open(filename, "r") as f:
+        return json.load(f)
 
 # ==============================
 # MONITOR LOGIC
 # ==============================
 def monitor():
     global previous_vacancy_state
+    print(f"\n ⏱️ checking at {format_datetime(datetime.now().isoformat())}")
 
-    print("\n⏱️ Checking at", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-
-    data = fetch_data()
+    # data = fetch_data()
+    data = load_json("data/response_2026-03-25_11-07-39.json")  # for testing
 
     if not data:
-        send_email(
-            subject="⚠️ Monitor Alert: No Data",
-            body="No data returned from API. Possible issue."
-        )
+        send_email("⚠️ Monitor Alert", "No data received from PerfectGym API")
+        send_telegram("⚠️ Monitor Alert: No data received from PerfectGym API")
         return
 
-    save_json(data)
-
-    found_any = False
-
+    # save_json(data)
+    
+    found = False
+    # x = 1/ 0 # to test error handling
     for item in data:
         name = item.get("Name", "").lower()
 
         if TARGET_CLASS in name:
-            found_any = True
+            found = True
 
-            # ✅ Extract available spots correctly
             booking = item.get("BookingIndicator", {})
             available = booking.get("Available", 0)
 
-            # ✅ Extract Sunday date only
             sunday_dates = []
             for d in item.get("ClassDates", []):
+                
                 if d.get("Day") == "Sun" and d.get("Dates"):
                     sunday_dates.extend(d.get("Dates"))
 
-            # fallback if no date
             if not sunday_dates:
-                sunday_dates = ["Unknown Date"]
+                continue
 
             for date in sunday_dates:
                 key = f"{name}_{date}"
-                previous_available = previous_vacancy_state.get(key, 0)
+                formatted_date = format_datetime(date)
+                prev = previous_vacancy_state.get(key, 0)
 
-                print(f"➡️ {name} | {date} | Available: {available}")
+                print(f"➡️ {name} | {formatted_date} | Available: {available}")
 
-                # 🚨 ALERT (only when new spot appears)
-                if available > 0 and previous_available == 0:
-                    print("🔥 New vacancy detected!")
+                if available > 0 and prev == 0:
+                    print("🔥 Vacancy detected!")
 
-                    send_email(
-                        subject="🏊 Swimming Spot Available!",
-                        body=f"{name}\nDate: {date}\nAvailable Spots: {available}"
-                    )
+                    msg = f"""
+                            🏊 Wetlanders Slot Available!
+
+                            📌 Class: {name}
+                            📅 Date: {formatted_date}
+                            👥 Spots: {available}
+
+                            👉 Book now!
+                            """
+
+                    send_email("🏊 Slot Available!", msg)
+                    send_telegram(msg)
 
                 previous_vacancy_state[key] = available
 
-    if not found_any:
-        print("❌ No Wetlanders class found")
+    if not found:
+        print("❌ No Wetlanders classes found")
 
 # ==============================
 # MAIN LOOP
@@ -198,13 +260,14 @@ def main():
         except Exception as e:
             print("❌ Critical error:", e)
 
-            send_email(
-                subject="🚨 Monitor Crashed",
-                body=str(e)
-            )
+            send_email("🚨 Monitor Crashed", str(e))
+            send_telegram(f"🚨 Monitor crashed:\n{str(e)}")
+            sys.exit("Stopping script")
 
         time.sleep(CHECK_INTERVAL)
 
-
+# ==============================
+# RUN
+# ==============================
 if __name__ == "__main__":
     main()

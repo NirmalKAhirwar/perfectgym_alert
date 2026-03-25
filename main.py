@@ -39,7 +39,7 @@ print("✅ Environment variables loaded")
 TARGET_CLASS = "wetlanders"
 URL = "https://cockburnarc.perfectgym.com.au/ClientPortal2/Groups/GroupsCalendar/GroupList"
 
-CHECK_INTERVAL = 300  # 30 minutes
+CHECK_INTERVAL = 60  # 30 minutes
 MAX_PAGES = 20
 
 previous_vacancy_state = {}
@@ -190,8 +190,8 @@ def monitor():
     global previous_vacancy_state
     print(f"\n ⏱️ checking at {format_datetime(datetime.now().isoformat())}")
 
-    data = fetch_data()
-    # data = load_json("data/response_2026-03-25_11-07-39.json")  # for testing
+    # data = fetch_data() # fetching real data from API 
+    data = load_json("data/response_2026-03-25_11-07-39.json")  # for testing 
 
     if not data:
         send_email("⚠️ Monitor Alert", "No data received from PerfectGym API")
@@ -202,6 +202,7 @@ def monitor():
     
     found = False
     # x = 1/ 0 # to test error handling
+    
     for item in data:
         name = item.get("Name", "").lower()
 

@@ -119,6 +119,8 @@ You should see:
 
   * 🚨 Alert is sent automatically
 
+* At the end of the day (1700), An Email summary is send.
+
 ---
 
 ## 9. Deployment

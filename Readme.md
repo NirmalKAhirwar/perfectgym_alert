@@ -59,7 +59,7 @@ TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 
 ---
 
-## 5. Setup Email (Resend)
+## 6. Setup Email (Resend)
 
 1. Go to <https://resend.com>
 2. Create an account
@@ -72,7 +72,7 @@ RESEND_API_KEY=...
 
 ---
 
-## 6. Setup Telegram Alerts
+## 7. Setup Telegram Alerts
 
 ### Step 1: Create Bot
 
@@ -172,7 +172,7 @@ This step is required because:
 👉 **This step is required for alerts to work properly.**
 ---
 
-## 7. Run the Script
+## 8. Run the Script
 
 In terminal:
 
@@ -188,7 +188,7 @@ You should see:
 
 ---
 
-## 8. How It Works
+## 9. How It Works
 
 * Script checks every **30 minutes**
 * Monitors Sunday “Wetlanders” classes
@@ -204,7 +204,7 @@ You should see:
 
 ---
 
-## 9. Deployment
+## 10. Deployment
 
 For 24/7 running, deploy on cloud:
 
@@ -218,7 +218,7 @@ For 24/7 running, deploy on cloud:
 
 ---
 
-## 10. Start / Stop
+## 11. Start / Stop
 
 ### Start
 
@@ -236,7 +236,7 @@ Ctrl + C
 
 ---
 
-## 11. Notes
+## 12. Notes
 
 * No duplicate alerts will be sent
 * Telegram alerts are instant and free

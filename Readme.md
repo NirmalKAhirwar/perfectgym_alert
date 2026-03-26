@@ -21,10 +21,25 @@ perfect_gym_alert/
 ```
 
 ---
+## 3. Activate Virtual Environment
+### 🪟 Windows (CMD)
+```
+venv\Scripts\activate
+```
 
-## 3. Install Dependencies
+👉 If you get execution policy error:
+```
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
-Open terminal/command prompt inside the project folder and run:
+### 🍎 macOS / 🐧 Linux
+```
+source venv/bin/activate
+```
+
+## 4. Install Dependencies
+
+Once virtualenv is activate, Open terminal/command prompt inside the project folder and run:
 
 ```
 pip install -r requirements.txt
@@ -32,7 +47,7 @@ pip install -r requirements.txt
 
 ---
 
-## 4. Configure Environment Variables
+## 5. Configure Environment Variables
 
 Create a file named **`.env`** in the project folder and add:
 
@@ -78,17 +93,83 @@ TELEGRAM_BOT_TOKEN=...
 
 ### Step 2: Activate Bot (IMPORTANT)
 
-* Open this link in browser:
+Before the bot can send alerts to you, **you must start a conversation with the bot first**.  
+Telegram bots are only allowed to send messages to users **after the user has interacted with the bot at least once**.
 
-```
-https://t.me/<your_bot_username>
-```
+---
 
-* Click **Start**
-* Send any message (e.g. "Hi")
+#### Method 1 — Using Browser (Recommended)
 
-👉 This step is required for alerts to work
+1. Open your web browser.
 
+2. Open the following link:
+
+   ```
+   https://t.me/<your_bot_username>
+   ```
+
+3. Replace `<your_bot_username>` with your actual bot username.
+
+   **Example:**
+
+   ```
+   https://t.me/MyAlertBot
+   ```
+
+4. Telegram will open your bot page.
+
+5. Click the **Start** button.
+
+6. Send any message to the bot.
+
+   **Example messages:**
+
+   ```
+   Hi
+   Hello
+   Test
+   ```
+
+✅ Your bot is now activated.
+
+---
+
+#### Method 2 — Using Telegram App (PC / Mac / iOS / Android)
+
+Alternatively, you can activate the bot directly from the Telegram app on your device.
+
+1. Open **Telegram** on your device  
+   (PC, Mac, iOS, or Android).
+
+2. In the **Search bar**, type your bot username.
+
+3. Select your bot from the search results.
+
+4. Click **Start**.
+
+5. Send any message to begin the conversation.
+
+   **Example:**
+
+   ```
+   Hi
+   Test message
+   Hello bot
+   ```
+
+✅ Your bot is now activated.
+
+---
+
+### Why This Step Is Required
+
+This step is required because:
+
+* Telegram bots **cannot send messages to users** unless the user has started the conversation first.
+* If this step is skipped, **alerts will not work**.
+* Once you send the first message, the bot will be able to send notifications and alerts to you.
+
+👉 **This step is required for alerts to work properly.**
 ---
 
 ## 7. Run the Script
@@ -102,7 +183,7 @@ python main.py
 You should see:
 
 ```
-🚀 Monitoring started...
+🚀 Wetlanders Monitoring started...
 ```
 
 ---
